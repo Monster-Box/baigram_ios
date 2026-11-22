@@ -40,9 +40,11 @@ jobs:
       - name: Create canonical source directory
         run: |
           set -x
-          sudo mkdir -p /Users/Shared
+          whoami
+          ls -ld /Users/Shared
           sudo rm -rf /Users/Shared/telegram-ios
-          sudo cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
+          cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
+          ls -ld /Users/Shared/telegram-ios
 
       - name: Import fake signing certificate
         run: |
