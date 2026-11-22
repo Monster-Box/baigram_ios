@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Checkout submodules (shallow)
+        run: |
+          git submodule sync --recursive
+          git -c submodule.fetchJobs=8 submodule update --init --depth 1 --recursive \
+            || git submodule update --init --recursive
+
+      - name: Select Xcode
+        run: |
+          set -x
+          XCODE_VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["xcode"])')
+          if [ -d "/Applications/Xcode_${XCODE_VERSION}.app" ]; then
+            sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+          else
+            echo "Xcode ${XCODE_VERSION} is not installed, using: $(xcodebuild -version | head -1)"
+          fi
+          xcodebuild -version
+          df -h /
+
+      - name: Create canonical source directory
+        run: |
+          set -x
+          sudo mkdir -p /Users/Shared
+          sudo rm -rf /Users/Shared/telegram-ios
+          sudo cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
+
+      - name: Import fake signing certificate
+        run: |
+          set -x
+          cd /Users/Shared/telegram-ios
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+
+      - name: Build the app
+        run: |
+          set -x
+          cd /Users/Shared/telegram-ios
+          BUILD_NUMBER_OFFSET="$(cat build_number_offset)"
+          BUILD_NUMBER="$((GITHUB_RUN_NUMBER + BUILD_NUMBER_OFFSET))"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          python3 -u build-system/Make/Make.py \
+            --overrideXcodeVersion \
+            --bazelUserRoot=/private/var/tmp/_bazel_containerhost \
+            build \
+            --configurationPath=build-system/appstore-configuration.json \
+            --codesigningInformationPath=build-system/fake-codesigning \
+            --configuration=release_arm64 \
+            --buildNumber="$BUILD_NUMBER" \
+            --continueOnError \
+            --outputBuildArtifactsPath=build/artifacts
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Telegram-${{ env.BUILD_NUMBER }}-ipa
+          path: |
+            /Users/Shared/telegram-ios/build/artifacts/Telegram.ipa
+            /Users/Shared/telegram-ios/build/artifacts/Telegram.DSYMs.zip
+          if-no-files-found: error
