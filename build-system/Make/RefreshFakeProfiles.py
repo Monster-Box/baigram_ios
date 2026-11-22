@@ -49,7 +49,7 @@ def find_signing_identity(keychain_name):
 
 
 def certificate_der_bytes(keychain_name, identity):
-    pem = run_executable_with_output('security', arguments=['find-certificate', '-c', identity, '-p', '-k', keychain_name], check_result=True)
+    pem = run_executable_with_output('security', arguments=['find-certificate', '-c', identity, '-p', keychain_name], check_result=True)
     body = ''.join(line for line in pem.splitlines() if not line.startswith('-----'))
     return base64.b64decode(body)
 
