@@ -7422,7 +7422,7 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
         let showGroupHeaders = other.count > 1
         for serverName in serverOrder {
             if showGroupHeaders {
-                items.append(.action(ContextMenuActionItem(text: serverName, textColor: .disabled, icon: { _ in nil }, action: nil)))
+                items.append(.action(ContextMenuActionItem(text: serverName, textColor: .disabled, icon: { _ in nil }, action: { (_: ContextMenuActionItem.Action) in })))
             }
             for account in serverGroups[serverName] ?? [] {
                 let id = account.0.account.id

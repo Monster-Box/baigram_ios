@@ -37,6 +37,14 @@ jobs:
           xcodebuild -version
           df -h /
 
+      - name: Restore Bazel disk cache
+        uses: actions/cache@v4
+        with:
+          path: ~/bazel-disk-cache
+          key: bazel-cache-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}
+          restore-keys: |
+            bazel-cache-
+
       - name: Create canonical source directory
         run: |
           set -x
@@ -67,6 +75,7 @@ jobs:
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
           python3 -u build-system/Make/Make.py \
             --overrideXcodeVersion \
+            --cacheDir="$HOME/bazel-disk-cache" \
             --bazelUserRoot=/private/var/tmp/_bazel_containerhost \
             build \
             --configurationPath=build-system/appstore-configuration.json \
