@@ -650,7 +650,7 @@ func initializedNetwork(accountId: AccountRecordId, arguments: NetworkInitializa
                 context.updateAddressSetForDatacenter(withId: BaigramServerConfig.datacenterId, addressSet: MTDatacenterAddressSet(addressList: [baigramAddress]), forceUpdateSchemes: true)
                 if baigramServer.hasPublicKey {
                     let baigramPublicKeys: [[AnyHashable: Any]] = [["key": baigramServer.pubkey]]
-                    context.updatePublicKeysForDatacenterWithId(BaigramServerConfig.datacenterId, publicKeys: baigramPublicKeys)
+                    context.updatePublicKeysForDatacenter(withId: BaigramServerConfig.datacenterId, publicKeys: baigramPublicKeys)
                 }
             }
 

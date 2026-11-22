@@ -148,7 +148,7 @@ public struct BaigramServerConfig {
         network.context.updateAddressSetForDatacenter(withId: dcId, addressSet: MTDatacenterAddressSet(addressList: [address]), forceUpdateSchemes: true)
         if config.hasPublicKey {
             let publicKeys: [[AnyHashable: Any]] = [["key": config.pubkey]]
-            network.context.updatePublicKeysForDatacenterWithId(dcId, publicKeys: publicKeys)
+            network.context.updatePublicKeysForDatacenter(withId: dcId, publicKeys: publicKeys)
         }
         network.context.updateAuthInfoForDatacenter(withId: dcId, authInfo: nil, selector: .persistent)
         network.context.updateAuthInfoForDatacenter(withId: dcId, authInfo: nil, selector: .ephemeralMain)

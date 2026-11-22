@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 360
 
     steps:
@@ -46,6 +46,12 @@ jobs:
           cp -R "$GITHUB_WORKSPACE" /Users/Shared/telegram-ios
           ls -ld /Users/Shared/telegram-ios
 
+      - name: Refresh fake signing profiles
+        run: |
+          set -x
+          cd /Users/Shared/telegram-ios
+          python3 build-system/Make/RefreshFakeProfiles.py build/verification-codesigning
+
       - name: Import fake signing certificate
         run: |
           set -x
@@ -64,7 +70,7 @@ jobs:
             --bazelUserRoot=/private/var/tmp/_bazel_containerhost \
             build \
             --configurationPath=build-system/appstore-configuration.json \
-            --codesigningInformationPath=build-system/fake-codesigning \
+            --codesigningInformationPath=build/verification-codesigning \
             --configuration=release_arm64 \
             --buildNumber="$BUILD_NUMBER" \
             --continueOnError \
