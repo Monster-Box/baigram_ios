@@ -19,10 +19,32 @@ from GenerateProfiles import setup_temp_keychain, cleanup_temp_keychain
 
 
 def find_signing_identity(keychain_name):
-    output = run_executable_with_output('security', arguments=['find-identity', '-v', '-p', 'codesigning', keychain_name], check_result=True)
-    for line in output.splitlines():
-        if '"' in line:
-            return line.split('"')[1]
+    # -v / -p codesigning skip a self-signed cert that is not trusted, so try the
+    # unfiltered listings first and fall back to the certificate attributes.
+    queries = [
+        ['find-identity', keychain_name],
+        ['find-identity', '-v', '-p', 'codesigning', keychain_name],
+        ['find-certificate', '-a', keychain_name],
+    ]
+    outputs = []
+    for query in queries:
+        output = run_executable_with_output('security', arguments=query, check_result=False)
+        outputs.append((query, output))
+        if not output:
+            continue
+        for line in output.splitlines():
+            if query[0] == 'find-identity':
+                if '"' in line:
+                    return line.split('"')[1]
+            else:
+                marker = '="'
+                if marker in line:
+                    value = line.split(marker, 1)[1].strip().strip('"')
+                    if value:
+                        return value
+    for query, output in outputs:
+        print('--- security {} ---'.format(' '.join(query)))
+        print(output)
     return None
 
 
